@@ -26,10 +26,13 @@ setInterval(async () => {
         })
 
         database.results.forEach((page, i) => {
-            //titleState(page, i)
-            //weekDay(page, i)
-            //repeatingTask(page)
-            autoStatus(page)
+            // Timeout to prevent sending too many requests at once
+            setTimeout(() => {
+                titleState(page)
+                weekDay(page)
+                repeatingTask(page)
+                //autoStatus(page)
+            }, 1000 * i);
         })
 
         if (database.has_more) {
@@ -42,10 +45,13 @@ setInterval(async () => {
         })
 
         database.results.forEach((page, i) => {
-            //titleState(page, i)
-            //weekDay(page, i)
-            //repeatingTask(page)
-            autoStatus(page)
+            // Timeout to prevent sending too many requests at once
+            setTimeout(() => {
+                titleState(page)
+                weekDay(page)
+                repeatingTask(page)
+                //autoStatus(page)
+            }, 1000 * i);
         })
 
         if (database.has_more) {
@@ -99,9 +105,8 @@ function repeatingTask(page, i) {
 /**
  * Updates the weekly view by changing the day property if the task is within this week. 
  * @param {object} page 
- * @param {Number} i 
  */
-async function weekDay(page, i) {
+async function weekDay(page) {
     let dayIDs = [
         undefined, // Sunday
         "4d51dd0a-2d31-46b2-b824-4fc21e1f20f2", // Monday
@@ -112,100 +117,106 @@ async function weekDay(page, i) {
         undefined // Saturday
     ]
 
-    setTimeout(() => {
-        if (page.properties.Date) {
-            let startTime = new Date(page.properties.Date.date.start)
-            let dayNumberStart = startTime.getDay()
+    if (page.properties.Date) {
+        let startTime = new Date(page.properties.Date.date.start)
+        let dayNumberStart = startTime.getDay()
 
-            if (page.properties.Date.date.end) {
-                let endTime = new Date(page.properties.Date.date.end)
-                let days = []
+        if (page.properties.Date.date.end) {
+            let endTime = new Date(page.properties.Date.date.end)
+            let days = []
 
-                let dates = getDates(startTime, endTime)
+            let dates = getDates(startTime, endTime)
 
-                dates.forEach(date => {
-                    if (isDateInThisWeek(date) && dayIDs[date.getDay()]) {
-                        days.push({
-                            id: dayIDs[date.getDay()]
-                        })
-                    }
-                })
-                if (page.properties.Day.multi_select == days) return
-
-                setDays(client, page, days)
-
-            } else {
-
-                if (isDateInThisWeek(startTime)) {
-                    let days = []
-                    if (dayIDs[dayNumberStart]) {
-                        days.push({
-                            id: dayIDs[dayNumberStart]
-                        })
-                        if (page.properties.Day.multi_select == days) return
-
-                        setDays(client, page, days)
-                    }
+            dates.forEach(date => {
+                if (isDateInThisWeek(date) && dayIDs[date.getDay()]) {
+                    days.push({
+                        id: dayIDs[date.getDay()]
+                    })
                 }
+            })
+            if (page.properties.Day.multi_select == days) return
 
+            setDays(client, page, days)
+
+        } else {
+
+            if (isDateInThisWeek(startTime)) {
+                let days = []
+                if (dayIDs[dayNumberStart]) {
+                    days.push({
+                        id: dayIDs[dayNumberStart]
+                    })
+                    if (page.properties.Day.multi_select == days) return
+
+                    setDays(client, page, days)
+                }
             }
-        } else if (page.properties.Day.multi_select[0]) {
-            setDays(client, page, [])
+
         }
-    }, 1000 * i);
+    } else if (page.properties.Day.multi_select[0]) {
+        setDays(client, page, [])
+    }
 }
 
 /**
  * Updates the title of each page to show state and % completed
  * @param {object} page 
- * @param {Number} i 
  */
-async function titleState(page, i) {
-    // Timeout to prevent sending too many requests at once
-    setTimeout(() => {
-        //console.log("Update: " + page.properties.Name.title[0].plain_text)
-        let title
-        let total;
-        let finished;
-        let finishedPercent;
+async function titleState(page) {
+    let ignoreTaskTypes = ["Vacation", "PartialVacation", "SubTask", "ReportTask", "Meeting"]
+    if (page.properties.TaskType) {
+        if (!~ignoreTaskTypes.indexOf(page.properties.TaskType.select.name)) {
 
-        if (page.properties.TotalSubtasks.rollup.number == 0) {
-            if (page.properties.TotalSubtasks2.rollup.number == 0) {
-                finishedPercent = `[] `;
+            //console.log("Update: " + page.properties.Name.title[0].plain_text)
+            let title
+            let total;
+            let finished;
+            let finishedPercent;
+
+            if (page.properties.TotalSubtasks.rollup.number == 0) {
+                if (page.properties.TotalSubtasks2.rollup.number == 0) {
+                    finishedPercent = `[] `;
+                } else {
+                    total = page.properties.TotalSubtasks2.rollup.number;
+                    finished = page.properties.CompleteSubtasks2.rollup.number
+                    finishedPercent = `[${Math.round(finished / total * 100)}%] `;
+                }
             } else {
-                total = page.properties.TotalSubtasks2.rollup.number;
-                finished = page.properties.CompleteSubtasks2.rollup.number
+                total = page.properties.TotalSubtasks.rollup.number;
+                finished = page.properties.CompleteSubtasks.rollup.number
                 finishedPercent = `[${Math.round(finished / total * 100)}%] `;
             }
+            if (!page.properties.Name.title[0]) {
+                title = ""
+            } else title = page.properties.Name.title[0].plain_text;
+
+            if (!page.properties.State) {
+                if (title.includes('[] ' + finishedPercent)) return
+                setTitle(client, page, `[] ${finishedPercent}${title.replace(/\[.*\]\s*/gm, '')}`)
+                return
+            }
+
+            let state = page.properties.State.select.name;
+
+            if (states.has(state)) {
+                if (title.includes(states.get(state).displayText + finishedPercent)) return
+                setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
+            } else {
+                states.set(state, {
+                    displayText: `[${state}] `,
+                    id: page.properties.State.select.id
+                })
+                if (title.includes(states.get(state).displayText + finishedPercent)) return
+                setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
+            }
         } else {
-            total = page.properties.TotalSubtasks.rollup.number;
-            finished = page.properties.CompleteSubtasks.rollup.number
-            finishedPercent = `[${Math.round(finished / total * 100)}%] `;
+            if (page.properties.Name) {
+                if (page.properties.Name.title[0].plain_text.match(/^\[.*\] \[.*\] /gm)) {
+                    setTitle(client, page, page.properties.Name.title[0].plain_text.replace(/^\[.*\] \[.*\] /gm, ''))
+                }
+            }
         }
-        if (!page.properties.Name.title[0]) {
-            title = ""
-        } else title = page.properties.Name.title[0].plain_text;
-
-        if (!page.properties.State) {
-            if (title.includes('[] ' + finishedPercent)) return
-            setTitle(client, page, `[] ${finishedPercent}${title.replace(/\[.*\]\s*/gm, '')}`)
-            return
-        }
-
-        let state = page.properties.State.select.name;
-
-        if (states.has(state)) {
-            if (title.includes(states.get(state).displayText + finishedPercent)) return
-            setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
-        } else {
-            states.set(state, {
-                displayText: `[${state}] `,
-                id: page.properties.State.select.id
-            })
-            if (title.includes(states.get(state).displayText + finishedPercent)) return
-            setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
-        }
-    }, 1000 * i);
+    }
 }
 
 async function autoStatus(page) {
@@ -240,38 +251,46 @@ async function autoStatus(page) {
 async function setTitle(client, page, title) {
     let lastEdit = page.properties["Last edited by"].last_edited_by
     if (lastEdit.type == "person") {
-        await client.pages.update({
-            page_id: page.id,
-            properties: {
-                Name: {
-                    id: "title",
-                    title: [{
-                        text: {
-                            content: title
-                        }
-                    }]
-                },
-                PersonChange: {
-                    people: [{
-                        id: lastEdit.id
-                    }]
+        try {
+            await client.pages.update({
+                page_id: page.id,
+                properties: {
+                    Name: {
+                        id: "title",
+                        title: [{
+                            text: {
+                                content: title
+                            }
+                        }]
+                    },
+                    PersonChange: {
+                        people: [{
+                            id: lastEdit.id
+                        }]
+                    }
                 }
-            }
-        })
+            })
+        } catch (e) {
+            console.log(`Got err: ${e} \nwhen changing Title of: ${page}`)
+        }
     } else {
-        await client.pages.update({
-            page_id: page.id,
-            properties: {
-                Name: {
-                    id: "title",
-                    title: [{
-                        text: {
-                            content: title
-                        }
-                    }]
+        try {
+            await client.pages.update({
+                page_id: page.id,
+                properties: {
+                    Name: {
+                        id: "title",
+                        title: [{
+                            text: {
+                                content: title
+                            }
+                        }]
+                    }
                 }
-            }
-        })
+            })
+        } catch (e) {
+            console.log(`Got err: ${e} \nwhen changing Title of: ${page}`)
+        }
     }
 }
 
@@ -284,30 +303,37 @@ async function setTitle(client, page, title) {
 async function setDays(client, page, days) {
     let lastEdit = page.properties["Last edited by"].last_edited_by
     if (lastEdit.type == "person") {
-        await client.pages.update({
-            page_id: page.id,
-            properties: {
-                Day: {
-                    multi_select: days
-                },
-                PersonChange: {
-                    people: [{
-                        id: lastEdit.id
-                    }]
+        try {
+            await client.pages.update({
+                page_id: page.id,
+                properties: {
+                    Day: {
+                        multi_select: days
+                    },
+                    PersonChange: {
+                        people: [{
+                            id: lastEdit.id
+                        }]
+                    }
                 }
-            }
-        })
+            })
+        } catch (e) {
+            console.log(`Got err: ${e} \nwhen changing Day of: ${page}`)
+        }
     } else {
-        await client.pages.update({
-            page_id: page.id,
-            properties: {
-                Day: {
-                    multi_select: days
+        try {
+            await client.pages.update({
+                page_id: page.id,
+                properties: {
+                    Day: {
+                        multi_select: days
+                    }
                 }
-            }
-        })
+            })
+        } catch (e) {
+            console.log(`Got err: ${e} \nwhen changing Day of: ${page}`)
+        }
     }
-
 }
 
 /**
@@ -319,32 +345,40 @@ async function setDays(client, page, days) {
 async function changeState(client, page, stateID) {
     let lastEdit = page.properties["Last edited by"].last_edited_by
     if (lastEdit.type == "person") {
-        await client.pages.update({
-            page_id: page.id,
-            properties: {
-                State: {
-                    select: {
-                        id: stateID
+        try {
+            await client.pages.update({
+                page_id: page.id,
+                properties: {
+                    State: {
+                        select: {
+                            id: stateID
+                        }
+                    },
+                    PersonChange: {
+                        people: [{
+                            id: lastEdit.id
+                        }]
                     }
-                },
-                PersonChange: {
-                    people: [{
-                        id: lastEdit.id
-                    }]
                 }
-            }
-        })
+            })
+        } catch (e) {
+            console.log(`Got err: ${e} \nwhen changing State of: ${page}`)
+        }
     } else {
-        await client.pages.update({
-            page_id: page.id,
-            properties: {
-                State: {
-                    select: {
-                        id: stateID
+        try {
+            await client.pages.update({
+                page_id: page.id,
+                properties: {
+                    State: {
+                        select: {
+                            id: stateID
+                        }
                     }
                 }
-            }
-        })
+            })
+        } catch (e) {
+            console.log(`Got err: ${e} \nwhen changing State of: ${page}`)
+        }
     }
 }
 
