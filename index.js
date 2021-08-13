@@ -210,7 +210,7 @@ async function titleState(page) {
                 setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
             }
         } else {
-            if (page.properties.Name) {
+            if (page.properties.Name.title[0]) {
                 if (page.properties.Name.title[0].plain_text.match(/^\[.*\] \[.*\] /gm)) {
                     setTitle(client, page, page.properties.Name.title[0].plain_text.replace(/^\[.*\] \[.*\] /gm, ''))
                 }
@@ -271,7 +271,7 @@ async function setTitle(client, page, title) {
                 }
             })
         } catch (e) {
-            console.log(`Got err: ${e} \nwhen changing Title of: ${page}`)
+            console.log(`Got err: ${e} \nwhen changing Title of: ${page.properties.Name.title[0].plain_text}`)
         }
     } else {
         try {
@@ -289,7 +289,7 @@ async function setTitle(client, page, title) {
                 }
             })
         } catch (e) {
-            console.log(`Got err: ${e} \nwhen changing Title of: ${page}`)
+            console.log(`Got err: ${e} \nwhen changing Title of: ${page.properties.Name.title[0].plain_text}`)
         }
     }
 }
@@ -318,7 +318,7 @@ async function setDays(client, page, days) {
                 }
             })
         } catch (e) {
-            console.log(`Got err: ${e} \nwhen changing Day of: ${page}`)
+            console.log(`Got err: ${e} \nwhen changing Day of: ${page.properties.Name.title[0].plain_text}`)
         }
     } else {
         try {
@@ -331,7 +331,7 @@ async function setDays(client, page, days) {
                 }
             })
         } catch (e) {
-            console.log(`Got err: ${e} \nwhen changing Day of: ${page}`)
+            console.log(`Got err: ${e} \nwhen changing Day of: ${page.properties.Name.title[0].plain_text}`)
         }
     }
 }
@@ -362,7 +362,7 @@ async function changeState(client, page, stateID) {
                 }
             })
         } catch (e) {
-            console.log(`Got err: ${e} \nwhen changing State of: ${page}`)
+            console.log(`Got err: ${e} \nwhen changing State of: ${page.properties.Name.title[0].plain_text}`)
         }
     } else {
         try {
@@ -377,7 +377,7 @@ async function changeState(client, page, stateID) {
                 }
             })
         } catch (e) {
-            console.log(`Got err: ${e} \nwhen changing State of: ${page}`)
+            console.log(`Got err: ${e} \nwhen changing State of: ${page.properties.Name.title[0].plain_text}`)
         }
     }
 }
