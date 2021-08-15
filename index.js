@@ -150,6 +150,8 @@ async function weekDay(page) {
 
                     setDays(client, page, days)
                 }
+            } else {
+                setDays(client, page, [])
             }
 
         }
