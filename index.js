@@ -31,7 +31,7 @@ setInterval(async () => {
                 titleState(page)
                 weekDay(page)
                 repeatingTask(page)
-                //autoStatus(page)
+                autoStatus(page)
             }, 1000 * i);
         })
 
@@ -50,7 +50,7 @@ setInterval(async () => {
                 titleState(page)
                 weekDay(page)
                 repeatingTask(page)
-                //autoStatus(page)
+                autoStatus(page)
             }, 1000 * i);
         })
 
@@ -221,10 +221,16 @@ async function titleState(page) {
     }
 }
 
-async function autoStatus(page) {
 
+/**
+ * If page is set tu have automatic status, this updates the pages state based on state of subtasks linked to the page
+ * @param {object} page 
+ */
+async function autoStatus(page) {
     if (page.properties.AutoState.checkbox) {
-        let reports = page.properties.Prepreq1_input.relation
+        let reports = page.properties.Hierarchy1_input.relation
+
+        if (!reports[0]) return
 
         let done = true
         await asyncForEach(reports, async report => {
@@ -232,14 +238,15 @@ async function autoStatus(page) {
                 page_id: report.id
             })
 
-            if (reportPage.properties.State.select.name !== "Done") {
+            if (reportPage.properties.State.select.id !== "047dcb8a-1cc5-4c87-a92a-6f9d8595025f") {
                 done = false
             }
         })
+
         if (done) {
-            setSelect(client, page, '2745c29d-7acc-4def-8433-7e646c0bf61c')
-        } else {
-            setSelect(client, page,)
+            setSelect(client, page, '047dcb8a-1cc5-4c87-a92a-6f9d8595025f')
+        } else if (page.properties.State.select.id == '047dcb8a-1cc5-4c87-a92a-6f9d8595025f') {
+            setSelect(client, page, "e72b06b8-ad9b-4d73-bb66-e0978ad09a12")
         }
     }
 }
