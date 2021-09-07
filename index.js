@@ -223,12 +223,12 @@ async function titleState(page) {
 
 
 /**
- * If page is set tu have automatic status, this updates the pages state based on state of subtasks linked to the page
+ * If page is set to have automatic status, this updates the pages state based on state of subtasks linked to the page
  * @param {object} page 
  */
 async function autoStatus(page) {
-    if (page.properties.AutoState.checkbox) {
-        let reports = page.properties.Hierarchy1_input.relation
+    if (page.properties.AutoState.checkbox && page.properties.Prepreq1_input) {
+        let reports = page.properties.Prepreq1_input.relation
 
         if (!reports[0]) return
 
@@ -237,9 +237,10 @@ async function autoStatus(page) {
             let reportPage = await client.pages.retrieve({
                 page_id: report.id
             })
-
-            if (reportPage.properties.State.select.id !== "047dcb8a-1cc5-4c87-a92a-6f9d8595025f") {
-                done = false
+            if (reportPage.properties.State) {
+                if (reportPage.properties.State.select.id !== "047dcb8a-1cc5-4c87-a92a-6f9d8595025f") {
+                    done = false
+                }
             }
         })
 
