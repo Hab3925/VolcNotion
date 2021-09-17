@@ -227,11 +227,10 @@ async function titleState(page) {
  * @param {object} page 
  */
 async function autoStatus(page) {
-    if (page.properties.AutoState.checkbox && page.properties.Prepreq1_input) {
-        let reports = page.properties.Prepreq1_input.relation
+    if (page.properties.AutoState.checkbox && page.properties.Prereq1_input) {
+        let reports = page.properties.Prereq1_input.relation
 
         if (!reports[0]) return
-
         let done = true
         await asyncForEach(reports, async report => {
             let reportPage = await client.pages.retrieve({
@@ -245,9 +244,9 @@ async function autoStatus(page) {
         })
 
         if (done) {
-            setSelect(client, page, '047dcb8a-1cc5-4c87-a92a-6f9d8595025f')
+            changeState(client, page, '047dcb8a-1cc5-4c87-a92a-6f9d8595025f')
         } else if (page.properties.State.select.id == '047dcb8a-1cc5-4c87-a92a-6f9d8595025f') {
-            setSelect(client, page, "e72b06b8-ad9b-4d73-bb66-e0978ad09a12")
+            changeState(client, page, "e72b06b8-ad9b-4d73-bb66-e0978ad09a12")
         }
     }
 }
