@@ -7,10 +7,11 @@ const client = new Client({
 });
 
 const Enmap = require("enmap")
-states = new Enmap({
+let enmaps = {}
+enmaps.states = new Enmap({
     name: "States"
 })
-repeatingTasks = new Enmap({
+enmaps.repeatingTasks = new Enmap({
     name: "repeatingTasks"
 })
 
@@ -19,7 +20,6 @@ const loopTimer = 10000;
 let cursor = undefined;
 setInterval(async () => {
     let databaseID = "4183c7afc303488d8218667be35b2621";
-
     if (!cursor) {
         const database = await client.databases.query({
             database_id: databaseID
@@ -28,7 +28,6 @@ setInterval(async () => {
         database.results.forEach((page, i) => {
             // Timeout to prevent sending too many requests at once
             setTimeout(() => {
-                titleState(page)
                 weekDay(page)
                 repeatingTask(page)
                 autoStatus(page)
@@ -47,7 +46,6 @@ setInterval(async () => {
         database.results.forEach((page, i) => {
             // Timeout to prevent sending too many requests at once
             setTimeout(() => {
-                titleState(page)
                 weekDay(page)
                 repeatingTask(page)
                 autoStatus(page)
@@ -64,7 +62,7 @@ setInterval(async () => {
 
     // Updating state of repeating tasks
     let now = new Date()
-    let array = Array.from(repeatingTasks, ([name, value]) => ({ name, value }));
+    let array = Array.from(enmaps.repeatingTasks, ([name, value]) => ({ name, value }));
 
     let dailyID = "d2e5c824-c854-4aed-98a2-315902767adb"
     let weeklyID = "8e3352db-8948-4a0b-8c45-907698bbf4a8"
@@ -79,7 +77,6 @@ setInterval(async () => {
         if (page.properties.State.select.id !== inProgID) {
             if (now.getHours() == 1) {
                 if (page.properties.Repeating.select.id == dailyID) {
-                    console.log("test")
                     changeState(client, page, inProgID)
                 } else if (now.getDay() == 1 && page.properties.Repeating.select.id == weeklyID) {
                     changeState(client, page, inProgID)
@@ -98,7 +95,7 @@ setInterval(async () => {
  */
 function repeatingTask(page, i) {
     if (page.properties.Repeating) {
-        repeatingTasks.set(page.id, page.properties.Repeating.select.id)
+        enmaps.repeatingTasks.set(page.id, page.properties.Repeating.select.id)
     }
 }
 
@@ -200,16 +197,16 @@ async function titleState(page) {
 
             let state = page.properties.State.select.name;
 
-            if (states.has(state)) {
-                if (title.includes(states.get(state).displayText + finishedPercent)) return
-                setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
+            if (enmaps.states.has(state)) {
+                if (title.includes(enmaps.states.get(state).displayText + finishedPercent)) return
+                setTitle(client, page, enmaps.states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
             } else {
-                states.set(state, {
+                enmaps.states.set(state, {
                     displayText: `[${state}] `,
                     id: page.properties.State.select.id
                 })
-                if (title.includes(states.get(state).displayText + finishedPercent)) return
-                setTitle(client, page, states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
+                if (title.includes(enmaps.states.get(state).displayText + finishedPercent)) return
+                setTitle(client, page, enmaps.states.get(state).displayText + finishedPercent + title.replace(/\[.*\]\s*/gm, ''))
             }
         } else {
             if (page.properties.Name.title[0]) {
