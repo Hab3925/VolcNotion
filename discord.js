@@ -1,3 +1,5 @@
+const { title } = require('process');
+
 module.exports.run = async (enmaps) => {
     const Discord = require('discord.js');
     const client = new Discord.Client({
@@ -52,5 +54,5 @@ module.exports.run = async (enmaps) => {
     })
 
 
-    client.login(loginToken);
+    client.login("OTA3OTcxODYzNTgwMzgxMjE1.YYu8sQ.cDhgMzPHPW7kwqEi-pV7PPgogsg");
 }

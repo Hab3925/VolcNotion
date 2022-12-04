@@ -31,6 +31,10 @@ setInterval(async () => {
                 weekDay(page)
                 repeatingTask(page)
                 autoStatus(page)
+
+                if (page.properties.Name.title[0]) {
+                    setTitle(page.properties.Name.title[0].plain_text.replace(/\[.+\]/, ""))
+                }
             }, 1000 * i);
         })
 
@@ -49,6 +53,9 @@ setInterval(async () => {
                 weekDay(page)
                 repeatingTask(page)
                 autoStatus(page)
+                if (page.properties.Name.title[0]) {
+                    setTitle(page.properties.Name.title[0].plain_text.replace(/\[.+\]/, ""))
+                }
             }, 1000 * i);
         })
 
